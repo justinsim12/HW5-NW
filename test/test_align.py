@@ -14,8 +14,18 @@ def test_nw_alignment():
     """
     seq1, _ = read_fasta("./data/test_seq1.fa")
     seq2, _ = read_fasta("./data/test_seq2.fa")
-    pass
-    
+    # Example usage with BLOSUM62 matrix and affine gaps
+    nw = NeedlemanWunsch("BLOSUM62.txt", gap_open=-10, gap_extend=-1)
+
+    score, aligned_seqA, aligned_seqB = nw.align(seq1, seq2)
+    # expected_score
+    # expected_aligned_seqA
+    # expected_aligned_seqB
+
+    # assert score == expected_score, f"Expected {expected_score}, but got {score}"
+    # assert aligned_seqA == expected_aligned_seqA, f"Expected {expected_aligned_seqA}, but got {aligned_seqA}"
+    # assert aligned_seqB == expected_aligned_seqB, f"Expected {expected_aligned_seqB}, but got {aligned_seqB}"
+
 
 def test_nw_backtrace():
     """
@@ -27,8 +37,15 @@ def test_nw_backtrace():
     """
     seq3, _ = read_fasta("./data/test_seq3.fa")
     seq4, _ = read_fasta("./data/test_seq4.fa")
-    pass
+    
+    nw = NeedlemanWunsch("BLOSUM62.txt", gap_open=-10, gap_extend=-1)
 
+    score, aligned_seqA, aligned_seqB = nw.align(seq3, seq4)
 
+    expected_score = 17
+    expected_aligned_seqA = 'MAVHQLIRRP'
+    expected_aligned_seqB = 'M---QLIRHP'
 
-
+    assert score == expected_score, f"Expected {expected_score}, but got {score}"
+    assert aligned_seqA == expected_aligned_seqA, f"Expected {expected_aligned_seqA}, but got {aligned_seqA}"
+    assert aligned_seqB == expected_aligned_seqB, f"Expected {expected_aligned_seqB}, but got {aligned_seqB}"
