@@ -9,6 +9,7 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/justinsim12/HW5-NW",  
+    packages=find_packages(include=['data', 'align', 'substitution_matrices']), 
     install_requires=[
         "numpy"
     ],
