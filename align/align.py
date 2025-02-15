@@ -115,61 +115,53 @@ class NeedlemanWunsch:
          	(alignment score, seqA alignment, seqB alignment) : Tuple[float, str, str]
          		the score and corresponding strings for the alignment of seqA and seqB
         """
-        # Resetting alignment in case method is called more than once
+         # Reset alignment variables
         self.seqA_align = ""
         self.seqB_align = ""
-
-        # Resetting alignment score in case method is called more than once
         self.alignment_score = 0
-
-        # Initializing sequences for use in backtrace method
         self._seqA = seqA
         self._seqB = seqB
-        
-        # TODO: Initialize matrix private attributes for use in alignment
-        # create matrices for alignment scores, gaps, and backtracing
+
         n, m = len(seqA), len(seqB)
 
         # Initialize matrices
-        self._align_matrix = np.zeros((n + 1, m + 1))
-        self._gapA_matrix = np.zeros((n + 1, m + 1))
-        self._gapB_matrix = np.zeros((n + 1, m + 1))
-        self._back = np.zeros((n + 1, m + 1), dtype=str)  # Main traceback matrix
+        self._align_matrix = np.full((n + 1, m + 1), float('-inf'))
+        self._gapA_matrix = np.full((n + 1, m + 1), float('-inf'))
+        self._gapB_matrix = np.full((n + 1, m + 1), float('-inf'))
+        self._back = np.zeros((n + 1, m + 1), dtype=str)
 
-        # Initialize first row and column (gap penalties)
+        # Set the starting position to 0
+        self._align_matrix[0][0] = 0
+
+        # Initialize first column (gap in seq2)
         for i in range(1, n + 1):
-            self._align_matrix[i][0] = self.gap_open + (i - 1) * self.gap_extend
-            self._gapA_matrix[i][0] = self.gap_open + (i - 1) * self.gap_extend
-            self._back[i][0] = "U"  # Up (gap in seqB)
+            self._align_matrix[i][0] = self.gap_open + (i - 1) * self.gap_extend  # Correct affine gap penalty
+            self._gapA_matrix[i][0] = self._align_matrix[i][0]
+            self._back[i][0] = "U"
 
+        # Initialize first row (gap in seq1)
         for j in range(1, m + 1):
-            self._align_matrix[0][j] = self.gap_open + (j - 1) * self.gap_extend
-            self._gapB_matrix[0][j] = self.gap_open + (j - 1) * self.gap_extend
-            self._back[0][j] = "L"  # Left (gap in seqA)
+            self._align_matrix[0][j] = self.gap_open + (j - 1) * self.gap_extend  # Correct affine gap penalty
+            self._gapB_matrix[0][j] = self._align_matrix[0][j]
+            self._back[0][j] = "L"
 
-        
-        # TODO: Implement global alignment here
         # Fill matrices using dynamic programming
         for i in range(1, n + 1):
             for j in range(1, m + 1):
-                match_score = self.sub_dict[(seqA[i - 1], seqB[j - 1])]
+                match_score = self.sub_dict.get((seqA[i - 1], seqB[j - 1]))
                 match = self._align_matrix[i - 1][j - 1] + match_score
 
-                # Gap penalties
-                gapA_open = self._align_matrix[i - 1][j] + self.gap_open
-                gapA_extend = self._gapA_matrix[i - 1][j] + self.gap_extend
-                gapA = max(gapA_open, gapA_extend)
-
-                gapB_open = self._align_matrix[i][j - 1] + self.gap_open
-                gapB_extend = self._gapB_matrix[i][j - 1] + self.gap_extend
-                gapB = max(gapB_open, gapB_extend)
-
-                # Select best score
-                best_score, best_move = max(
-                    (match, "D"),  # Diagonal (match/mismatch)
-                    (gapA, "U"),   # Up (gap in seqB)
-                    (gapB, "L")    # Left (gap in seqA)
-                )
+                # Correct gap penalties (Affine gap handling)
+                gapA = max(self._gapA_matrix[i - 1][j] + self.gap_extend, self._align_matrix[i - 1][j] + self.gap_open + self.gap_extend)
+                gapB = max(self._gapB_matrix[i][j - 1] + self.gap_extend, self._align_matrix[i][j - 1] + self.gap_open + self.gap_extend)
+                # Choose the best move
+                best_score = max(match, gapA, gapB)
+                if best_score == match:
+                    best_move = "D"  # Diagonal (match/mismatch)
+                elif best_score == gapA:
+                    best_move = "U"  # Gap in seq2
+                else:
+                    best_move = "L"  # Gap in seq1
 
                 # Store values
                 self._align_matrix[i][j] = best_score
@@ -180,8 +172,9 @@ class NeedlemanWunsch:
         # Store final alignment score
         self.alignment_score = self._align_matrix[n][m]
 
-        # Perform traceback to get aligned sequences      	
+        # Perform traceback to get aligned sequences
         return self._backtrace()
+
 
     def _backtrace(self) -> Tuple[float, str, str]:
         """
@@ -210,16 +203,15 @@ class NeedlemanWunsch:
                 alignA = self._seqA[i - 1] + alignA
                 alignB = "-" + alignB
                 i -= 1
-            else:  # Left (gap in seqA)
+            elif j > 0 and self._back[i][j] == "L":  # Left (gap in seqA)
                 alignA = "-" + alignA
                 alignB = self._seqB[j - 1] + alignB
                 j -= 1
 
         self.seqA_align = alignA
         self.seqB_align = alignB
-        
-        return (self.alignment_score, self.seqA_align, self.seqB_align)
 
+        return (self.alignment_score, self.seqA_align, self.seqB_align)
 
 def read_fasta(fasta_file: str) -> Tuple[str, str]:
     """
