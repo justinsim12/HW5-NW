@@ -7398,3 +7398,6 @@
 .venv/share/jupyter/kernels/python3/logo-64x64.png
 .venv/share/jupyter/kernels/python3/logo-svg.svg
 .venv/share/man/man1/ipython.1
+align/__pycache__/__init__.cpython-312.pyc
+align/__pycache__/align.cpython-312.pyc
+test/__pycache__/test_align.cpython-312-pytest-8.3.4.pyc
